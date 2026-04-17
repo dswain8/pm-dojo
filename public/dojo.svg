@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Circle background -->
+  <circle cx="32" cy="32" r="30" fill="#0a0a0f" stroke="#2B6CB0" stroke-width="2"/>
+
+  <!-- Katana (left, angled) -->
+  <g transform="rotate(-35 32 32)">
+    <!-- Blade -->
+    <rect x="30" y="6" width="3" height="34" rx="1.5" fill="#94a3b8"/>
+    <!-- Guard (tsuba) -->
+    <rect x="27" y="39" width="9" height="3" rx="1" fill="#f59e0b"/>
+    <!-- Handle -->
+    <rect x="29.5" y="42" width="4" height="14" rx="1.5" fill="#1e293b"/>
+    <!-- Handle wrap pattern -->
+    <line x1="29.5" y1="45" x2="33.5" y2="45" stroke="#334155" stroke-width="0.8"/>
+    <line x1="29.5" y1="48" x2="33.5" y2="48" stroke="#334155" stroke-width="0.8"/>
+    <line x1="29.5" y1="51" x2="33.5" y2="51" stroke="#334155" stroke-width="0.8"/>
+  </g>
+
+  <!-- Pen (right, angled) -->
+  <g transform="rotate(35 32 32)">
+    <!-- Pen body -->
+    <rect x="30" y="10" width="3" height="30" rx="1.5" fill="#2B6CB0"/>
+    <!-- Pen tip -->
+    <polygon points="30,40 33,40 31.5,46" fill="#e2e8f0"/>
+    <!-- Pen clip -->
+    <rect x="33" y="12" width="1.5" height="10" rx="0.5" fill="#1d4ed8"/>
+    <!-- Pen cap band -->
+    <rect x="29.5" y="10" width="4" height="2" rx="0.5" fill="#1d4ed8"/>
+  </g>
+
+  <!-- Small star/spark at the crossing point -->
+  <circle cx="32" cy="28" r="2" fill="#f59e0b" opacity="0.9"/>
+  <circle cx="32" cy="28" r="4" fill="#f59e0b" opacity="0.2"/>
+</svg>

@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply antialiased;
+  }
+
+  ::selection {
+    @apply bg-dojo-accent/30 text-white;
+  }
+
+  textarea {
+    @apply bg-dojo-card border border-dojo-border rounded-lg p-4 text-dojo-text font-mono text-sm
+           focus:outline-none focus:border-dojo-accent/50 focus:ring-1 focus:ring-dojo-accent/30
+           resize-none;
+  }
+}
+
+@layer components {
+  .dojo-btn {
+    @apply px-6 py-3 rounded-lg font-semibold text-sm uppercase tracking-wider
+           transition-all duration-200 cursor-pointer
+           border border-dojo-border
+           hover:border-dojo-accent hover:text-dojo-accent hover:shadow-lg hover:shadow-dojo-accent/10
+           active:scale-95;
+  }
+
+  .dojo-btn-primary {
+    @apply dojo-btn bg-dojo-accent text-dojo-bg border-dojo-accent
+           hover:bg-dojo-accent/90 hover:text-dojo-bg hover:border-dojo-accent;
+  }
+
+  .dojo-card {
+    @apply bg-dojo-card border border-dojo-border rounded-xl p-6;
+  }
+
+  .score-circle {
+    @apply w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold
+           border-2 animate-score-reveal;
+  }
+}
