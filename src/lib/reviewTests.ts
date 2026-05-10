@@ -1455,6 +1455,25 @@ export const PHASE3_SUBSTANTIVE_EXCELLENT_CASES: ReviewRobustnessCase[] = [
   },
 ];
 
+export const NUMERIC_MISAPPLICATION_CASES: ReviewRobustnessCase[] = [
+  {
+    id: "numeric-misapplication-activation-as-cost",
+    name: "Evidence activation metric reused as tradeoff cost",
+    domain: "numeric coherence",
+    expectedRewrite: "capped",
+    input: {
+      artifactKind: "prd",
+      audience: "Growth Eng and Design",
+      pmCall:
+        "Build checklist nudges by Friday to improve activation.",
+      context:
+        "Activation is 42%. Target is 55%. 16 customers asked for setup guidance.",
+      draft:
+        "Decision: build checklist nudges by Friday. Evidence: activation is 42%, target is 55%, and 16 customers asked for setup guidance. Tradeoff: we give up 42% activation, but improve setup clarity. Open ask: Design confirms nudge copy by Wednesday.",
+    },
+  },
+];
+
 export const PM_UNSAFE_CALL_CASES: ReviewRobustnessCase[] = [
   {
     id: "unsafe-customer-blame-call",
@@ -1541,6 +1560,7 @@ export const ALL_REVIEW_ROBUSTNESS_CASES: ReviewRobustnessCase[] = [
   ...REVIEW_ROBUSTNESS_CASES,
   ...PM_WORKFLOW_CASES,
   ...PHASE3_SUBSTANTIVE_EXCELLENT_CASES,
+  ...NUMERIC_MISAPPLICATION_CASES,
   ...PM_UNSAFE_CALL_CASES,
 ];
 

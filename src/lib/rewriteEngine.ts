@@ -30,6 +30,8 @@ const TRADEOFF_VERB_BLOCK =
   "[Rewrite paused — the tradeoff repeats the decision instead of naming the cost. State what changes, slows down, or gets cut.]";
 const EVIDENCE_COHERENCE_BLOCK =
   "[Rewrite paused — your evidence does not show up in the decision or the tradeoff. The reader will not see the connection. Restate.]";
+const NUMERIC_MISAPPLICATION_BLOCK =
+  "[Rewrite paused — your tradeoff re-uses an evidence number as if it were the cost. Name what slows down, what we accept losing, or what gets cut from scope.]";
 const CUSTOMER_INTERNAL_JARGON = /\b(eng|qa|dri|standup|pipeline|sprint)\b/i;
 const CUSTOMER_SECOND_PERSON = /\b(you|your|yours|yourself)\b/i;
 const BLAME_CUSTOMER_CALL = /^(tell\s+\S+\s+(it|they|you).*\b(fault|wrong|problem|mistake)\b)/i;
@@ -424,6 +426,18 @@ function contextSignals(text: string): string[] {
   return [...new Set([...metricSignals, ...namedSignals].map((signal) => signal.toLowerCase()))];
 }
 
+function numericEvidenceTokens(text: string): string[] {
+  return [
+    ...(text.match(/\b\d+(?:\.\d+)?%/gi) ?? []),
+    ...(text.match(/\$[\d,.]+(?:\.\d+)?[kKmMbB]?/g) ?? []),
+    ...(text.match(/\b\d+\s+(?:(?:[a-z-]+)\s+)?(?:tickets|customers|invoices|escalations|partners)\b/gi) ?? []),
+  ].map((token) => token.toLowerCase().replace(/\s+/g, " ").replace(/,/g, ""));
+}
+
+function hasGiveUpVerb(text: string): boolean {
+  return /\b(give up|lose|sacrifice|forfeit|walk away from)\b/i.test(text);
+}
+
 function capAssessment(
   assessment: RubricAssessment,
   cap: number,
@@ -475,6 +489,16 @@ function validateCoherence(input: ReviewInputBase, draft: string): { draft: stri
     return { draft: nextDraft, blockers };
   }
 
+  const contextNumericTokens = new Set(numericEvidenceTokens(context));
+  const tradeoffReusesEvidenceNumber = numericEvidenceTokens(tradeoff).some((token) =>
+    contextNumericTokens.has(token),
+  );
+  if (hasGiveUpVerb(tradeoff) && tradeoffReusesEvidenceNumber) {
+    nextDraft = replaceLineBody(nextDraft, "Tradeoff", NUMERIC_MISAPPLICATION_BLOCK);
+    blockers.push("Your tradeoff re-uses an evidence number as if it were the cost. Name what slows down, what we accept losing, or what gets cut from scope.");
+    return { draft: nextDraft, blockers };
+  }
+
   const signals = contextSignals(context);
   const decisionOrTradeoff = `${decision} ${tradeoff}`.toLowerCase();
   const hasContextSignalInDecisionOrTradeoff = signals.some((signal) =>
@@ -507,6 +531,9 @@ function rewriteGuardrailBlockers(draft: string): string[] {
   }
   if (draft.includes(EVIDENCE_COHERENCE_BLOCK)) {
     blockers.push("Your evidence does not show up in the decision or the tradeoff. The reader will not see the connection. Restate.");
+  }
+  if (draft.includes(NUMERIC_MISAPPLICATION_BLOCK)) {
+    blockers.push("Your tradeoff re-uses an evidence number as if it were the cost. Name what slows down, what we accept losing, or what gets cut from scope.");
   }
   return blockers;
 }
