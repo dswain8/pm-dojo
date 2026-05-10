@@ -10,6 +10,7 @@
     "rubric:lab": "node scripts/run-rubric-lab.cjs",
     "rubric:iterations": "node scripts/run-workflow-iterations.cjs",
     "probe": "node scripts/probe-adversarial.cjs",
+    "stress": "node scripts/stress-synthetic.cjs",
     "gate": "npm run typecheck && npm run rubric:lab && npm run rubric:iterations && npm run probe"
   },
   "dependencies": {
