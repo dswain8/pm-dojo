@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { saveSession } from "../lib/storage";
 import {
-  REVIEW_SAMPLE,
+  REVIEW_SAMPLES,
   reviewArtifact,
   type ArtifactKind,
   type ReviewInput,
@@ -26,6 +26,11 @@ const EMPTY_INPUT: ReviewInput = {
 };
 
 const FEEDBACK_FORM_URL = import.meta.env.VITE_FEEDBACK_FORM_URL;
+const PAUSED_REWRITE_PATTERN = /\[Rewrite paused — ([^\]]+)\]/g;
+
+type RevisedDraftSegment =
+  | { type: "text"; text: string }
+  | { type: "pause"; body: string };
 
 function readinessClass(readiness: ReviewOutput["readiness"]): string {
   if (readiness === "Send") return "border-dojo-green/40 bg-dojo-green/10 text-dojo-green";
@@ -44,6 +49,32 @@ function confidenceCopy(output: ReviewOutput): string {
     return "Enough context to judge the PM call and rewrite the artifact.";
   }
   return "Writing can improve, but PM judgment is under-supported until the missing context is added.";
+}
+
+function revisedDraftSegments(draft: string): RevisedDraftSegment[] {
+  const segments: RevisedDraftSegment[] = [];
+  const textBuffer: string[] = [];
+  const flushText = () => {
+    const text = textBuffer.join("\n").trim();
+    if (text) segments.push({ type: "text", text });
+    textBuffer.length = 0;
+  };
+
+  draft.split("\n").forEach((line) => {
+    const matches = Array.from(line.matchAll(PAUSED_REWRITE_PATTERN));
+    if (matches.length === 0) {
+      textBuffer.push(line);
+      return;
+    }
+
+    flushText();
+    matches.forEach((match) => {
+      segments.push({ type: "pause", body: match[1].trim() });
+    });
+  });
+
+  flushText();
+  return segments;
 }
 
 export function ReviewWork() {
@@ -94,8 +125,8 @@ export function ReviewWork() {
     });
   };
 
-  const loadSample = () => {
-    setInput(REVIEW_SAMPLE);
+  const loadSample = (artifactKind: ArtifactKind) => {
+    setInput(REVIEW_SAMPLES[artifactKind]);
     setOutput(null);
   };
 
@@ -103,7 +134,10 @@ export function ReviewWork() {
     <div className="space-y-8 animate-slide-up">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <Link to="/" className="text-dojo-muted text-sm hover:text-dojo-accent">
+          <Link
+            to="/"
+            className="inline-flex min-h-11 items-center text-dojo-muted text-sm hover:text-dojo-accent"
+          >
             ← Home
           </Link>
           <p className="text-xs uppercase tracking-[0.35em] text-dojo-accent mt-5">
@@ -117,9 +151,6 @@ export function ReviewWork() {
             missed, and a revised draft shaped like something you can actually send.
           </p>
         </div>
-        <button onClick={loadSample} className="dojo-btn md:self-center">
-          Load messy sample
-        </button>
       </div>
 
       <div className="dojo-card space-y-5">
@@ -131,20 +162,32 @@ export function ReviewWork() {
             {ARTIFACTS.map((artifact) => {
               const selected = input.artifactKind === artifact.value;
               return (
-                <button
+                <div
                   key={artifact.value}
-                  onClick={() => update("artifactKind", artifact.value)}
-                  className={`rounded-lg border p-3 text-left transition-colors ${
+                  className={`rounded-lg border p-3 transition-colors ${
                     selected
                       ? "border-dojo-accent bg-dojo-accent/10"
                       : "border-dojo-border hover:border-dojo-accent/60"
                   }`}
                 >
-                  <div className="text-sm font-semibold">{artifact.label}</div>
-                  <div className="text-[11px] text-dojo-muted mt-1">
-                    {artifact.hint}
-                  </div>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => update("artifactKind", artifact.value)}
+                    className="min-h-11 w-full text-left"
+                  >
+                    <div className="text-sm font-semibold">{artifact.label}</div>
+                    <div className="text-[11px] text-dojo-muted mt-1">
+                      {artifact.hint}
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => loadSample(artifact.value)}
+                    className="mt-3 min-h-11 text-xs font-semibold uppercase tracking-wider text-dojo-accent hover:text-dojo-text"
+                  >
+                    Try a sample →
+                  </button>
+                </div>
               );
             })}
           </div>
@@ -274,9 +317,20 @@ export function ReviewWork() {
             <h2 className="text-sm font-semibold uppercase tracking-wider text-dojo-green mb-3">
               Revised draft
             </h2>
-            <pre className="whitespace-pre-wrap text-sm leading-relaxed text-dojo-text/90 font-sans">
-              {output.revisedDraft}
-            </pre>
+            <div className="space-y-4">
+              {revisedDraftSegments(output.revisedDraft).map((segment, index) =>
+                segment.type === "pause" ? (
+                  <PausedRewriteCallout key={`pause-${index}`} body={segment.body} />
+                ) : (
+                  <pre
+                    key={`text-${index}`}
+                    className="whitespace-pre-wrap break-words text-sm leading-relaxed text-dojo-text/90 font-sans"
+                  >
+                    {segment.text}
+                  </pre>
+                ),
+              )}
+            </div>
           </div>
 
           <div className="dojo-card">
@@ -342,6 +396,27 @@ export function ReviewWork() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function PausedRewriteCallout({ body }: { body: string }) {
+  return (
+    <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-amber-100">
+      <div className="flex items-start gap-3">
+        <span className="mt-0.5 text-amber-300" aria-hidden="true">
+          ⚠︎
+        </span>
+        <div className="space-y-1">
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-amber-300">
+            Rewrite paused
+          </h3>
+          <p className="text-sm leading-relaxed text-amber-100/90">{body}</p>
+          <p className="text-xs text-amber-100/70">
+            Update your input above and re-run.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

@@ -37,7 +37,7 @@ export default function App() {
             <button
               type="button"
               onClick={dismissPrivacyBanner}
-              className="self-start rounded-full border border-dojo-border px-3 py-1 text-xs font-semibold uppercase tracking-wider text-dojo-muted transition-colors hover:border-dojo-accent hover:text-dojo-accent sm:self-center"
+              className="min-h-11 self-start rounded-full border border-dojo-border px-4 py-2 text-xs font-semibold uppercase tracking-wider text-dojo-muted transition-colors hover:border-dojo-accent hover:text-dojo-accent sm:self-center"
             >
               Dismiss
             </button>
@@ -48,7 +48,7 @@ export default function App() {
         <div className="max-w-5xl mx-auto flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <Link
             to="/"
-            className="inline-flex items-center hover:opacity-80 transition-opacity"
+            className="inline-flex min-h-11 items-center hover:opacity-80 transition-opacity"
           >
             <span className="text-lg font-bold tracking-widest uppercase text-dojo-accent">
               PM Dojo
@@ -64,7 +64,7 @@ export default function App() {
                 <Link
                   key={item.to}
                   to={item.to}
-                  className={`rounded-full px-3 py-1.5 text-sm transition-colors ${
+                  className={`inline-flex min-h-11 items-center rounded-full px-3 py-2 text-sm transition-colors ${
                     active
                       ? "bg-dojo-card text-dojo-accent"
                       : "text-dojo-muted hover:text-dojo-text"

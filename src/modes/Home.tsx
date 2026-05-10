@@ -74,7 +74,7 @@ export function Home() {
           </div>
           <Link
             to="/progress"
-            className="inline-block text-sm text-dojo-muted hover:text-dojo-accent mt-4"
+            className="mt-4 inline-flex min-h-11 items-center text-sm text-dojo-muted hover:text-dojo-accent"
           >
             View progress →
           </Link>
