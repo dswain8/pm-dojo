@@ -25,6 +25,8 @@ const EMPTY_INPUT: ReviewInput = {
   draft: "",
 };
 
+const FEEDBACK_FORM_URL = import.meta.env.VITE_FEEDBACK_FORM_URL;
+
 function readinessClass(readiness: ReviewOutput["readiness"]): string {
   if (readiness === "Send") return "border-dojo-green/40 bg-dojo-green/10 text-dojo-green";
   if (readiness === "Revise first") return "border-amber-500/40 bg-amber-500/10 text-amber-300";
@@ -322,6 +324,21 @@ export function ReviewWork() {
             <Link to="/practice" className="dojo-btn flex-1 text-center">
               Practice this skill
             </Link>
+          </div>
+          <div className="flex flex-col gap-3 border-t border-dojo-border pt-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs text-dojo-muted">
+              Reviewed in your browser. No data sent anywhere.
+            </p>
+            {FEEDBACK_FORM_URL && (
+              <a
+                href={FEEDBACK_FORM_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="dojo-btn text-center"
+              >
+                Send feedback
+              </a>
+            )}
           </div>
         </div>
       )}

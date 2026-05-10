@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 
 const NAV_ITEMS = [
@@ -7,11 +8,42 @@ const NAV_ITEMS = [
   { to: "/progress", label: "Progress" },
 ];
 
+const PRIVACY_BANNER_KEY = "pm-dojo:privacy-banner-dismissed-v1";
+
 export default function App() {
   const location = useLocation();
+  const [showPrivacyBanner, setShowPrivacyBanner] = useState(false);
+
+  useEffect(() => {
+    setShowPrivacyBanner(localStorage.getItem(PRIVACY_BANNER_KEY) !== "true");
+  }, []);
+
+  const dismissPrivacyBanner = () => {
+    localStorage.setItem(PRIVACY_BANNER_KEY, "true");
+    setShowPrivacyBanner(false);
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
+      {showPrivacyBanner && (
+        <div className="border-b border-dojo-accent/20 bg-dojo-accent/10 px-6 py-3">
+          <div className="max-w-5xl mx-auto flex flex-col gap-3 text-sm text-dojo-text sm:flex-row sm:items-center sm:justify-between">
+            <p>
+              <span className="font-semibold text-dojo-accent">
+                Everything runs in your browser.
+              </span>{" "}
+              Your drafts never leave this tab — no server, no logging, no LLM calls.
+            </p>
+            <button
+              type="button"
+              onClick={dismissPrivacyBanner}
+              className="self-start rounded-full border border-dojo-border px-3 py-1 text-xs font-semibold uppercase tracking-wider text-dojo-muted transition-colors hover:border-dojo-accent hover:text-dojo-accent sm:self-center"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
       <header className="border-b border-dojo-border px-6 py-4">
         <div className="max-w-5xl mx-auto flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <Link
