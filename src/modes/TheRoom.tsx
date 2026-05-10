@@ -1,87 +1,124 @@
-import { useState, useCallback } from 'react'
-import { Link } from 'react-router-dom'
-import { REPLAY_SCENARIOS } from '../data/scenarios'
-import { saveSession } from '../lib/storage'
+import { useState, useCallback } from "react";
+import { Link } from "react-router-dom";
+import { REPLAY_SCENARIOS } from "../data/scenarios";
+import { saveSession } from "../lib/storage";
 
-type Phase = 'intro' | 'playing' | 'debrief'
+type Phase = "intro" | "playing" | "debrief";
 
 export function TheRoom() {
-  const [phase, setPhase] = useState<Phase>('intro')
-  const [scenarioIdx] = useState(0)
-  const [stepIdx, setStepIdx] = useState(0)
-  const [trust, setTrust] = useState(50)
-  const [effectiveness, setEffectiveness] = useState(50)
-  const [choiceHistory, setChoiceHistory] = useState<{ step: number; label: string; outcome: string; principle: string }[]>([])
+  const [phase, setPhase] = useState<Phase>("intro");
+  const [scenarioIdx, setScenarioIdx] = useState(0);
+  const [stepIdx, setStepIdx] = useState(0);
+  const [trust, setTrust] = useState(50);
+  const [effectiveness, setEffectiveness] = useState(50);
+  const [choiceHistory, setChoiceHistory] = useState<
+    { step: number; label: string; outcome: string; principle: string }[]
+  >([]);
 
-  const scenario = REPLAY_SCENARIOS[scenarioIdx]
-  const step = scenario.steps[stepIdx]
+  const scenario = REPLAY_SCENARIOS[scenarioIdx];
+  const step = scenario.steps[stepIdx];
 
   const startGame = useCallback(() => {
-    setPhase('playing')
-    setStepIdx(0)
-    setTrust(50)
-    setEffectiveness(50)
-    setChoiceHistory([])
-  }, [])
+    setPhase("playing");
+    setStepIdx(0);
+    setTrust(50);
+    setEffectiveness(50);
+    setChoiceHistory([]);
+  }, []);
 
   const makeChoice = useCallback(
     (choiceIdx: number) => {
-      const choice = step.choices[choiceIdx]
-      const newTrust = Math.max(0, Math.min(100, trust + choice.trustDelta))
-      const newEff = Math.max(0, Math.min(100, effectiveness + choice.effectivenessDelta))
+      const choice = step.choices[choiceIdx];
+      const newTrust = Math.max(0, Math.min(100, trust + choice.trustDelta));
+      const newEff = Math.max(
+        0,
+        Math.min(100, effectiveness + choice.effectivenessDelta),
+      );
 
-      setTrust(newTrust)
-      setEffectiveness(newEff)
+      setTrust(newTrust);
+      setEffectiveness(newEff);
       setChoiceHistory((h) => [
         ...h,
-        { step: stepIdx + 1, label: choice.label, outcome: choice.outcome, principle: choice.principle },
-      ])
+        {
+          step: stepIdx + 1,
+          label: choice.label,
+          outcome: choice.outcome,
+          principle: choice.principle,
+        },
+      ]);
 
       if (stepIdx + 1 < scenario.steps.length) {
-        setStepIdx(stepIdx + 1)
+        setStepIdx(stepIdx + 1);
       } else {
         saveSession({
-          mode: 'the-room',
+          mode: "the-room",
           scenarioId: scenario.id,
           scenarioTitle: scenario.title,
           difficulty: scenario.difficulty,
           scores: { trust: newTrust, effectiveness: newEff },
           timestamp: Date.now(),
-        })
-        setPhase('debrief')
+        });
+        setPhase("debrief");
       }
     },
-    [step, stepIdx, trust, effectiveness, scenario]
-  )
+    [step, stepIdx, trust, effectiveness, scenario],
+  );
 
-  if (phase === 'intro') {
+  if (phase === "intro") {
     return (
       <div className="space-y-8">
         <div>
-          <Link to="/" className="text-dojo-muted text-sm hover:text-dojo-accent">← Arena</Link>
+          <Link
+            to="/practice"
+            className="text-dojo-muted text-sm hover:text-dojo-accent"
+          >
+            ← Practice
+          </Link>
           <h1 className="text-3xl font-bold mt-4">
             <span className="text-dojo-purple">🚪</span> The Room
           </h1>
         </div>
 
-        <div className="dojo-card border-dojo-purple/30 space-y-4">
-          <h2 className="text-xl font-bold">{scenario.title}</h2>
-          <span className="text-xs font-semibold uppercase tracking-wider text-dojo-purple">{scenario.difficulty}</span>
-          <p className="text-sm leading-relaxed text-dojo-text/80">{scenario.premise}</p>
-          <div className="flex gap-6 text-sm text-dojo-muted">
-            <span>{scenario.steps.length} decision points</span>
-            <span>Trust + Effectiveness tracked</span>
-          </div>
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-dojo-muted">
+            Pick a scenario
+          </h2>
+          {REPLAY_SCENARIOS.map((s, i) => (
+            <button
+              key={s.id}
+              onClick={() => setScenarioIdx(i)}
+              className={`w-full text-left dojo-card transition-all ${
+                i === scenarioIdx
+                  ? "border-dojo-purple"
+                  : "border-dojo-border hover:border-dojo-purple/50"
+              }`}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <h3 className="font-bold">{s.title}</h3>
+                <span className="text-xs font-semibold uppercase tracking-wider text-dojo-purple">
+                  {s.difficulty}
+                </span>
+              </div>
+              <p className="text-sm text-dojo-text/70 leading-relaxed">
+                {s.premise}
+              </p>
+              <div className="text-xs text-dojo-muted mt-2">
+                {s.steps.length} decision points
+              </div>
+            </button>
+          ))}
         </div>
 
-        <button onClick={startGame} className="dojo-btn-primary w-full">Begin Scenario</button>
+        <button onClick={startGame} className="dojo-btn-primary w-full">
+          Begin Scenario
+        </button>
       </div>
-    )
+    );
   }
 
-  if (phase === 'playing') {
+  if (phase === "playing") {
     // Show last outcome if not the first step
-    const lastChoice = choiceHistory[choiceHistory.length - 1]
+    const lastChoice = choiceHistory[choiceHistory.length - 1];
 
     return (
       <div className="space-y-6">
@@ -93,7 +130,10 @@ export function TheRoom() {
               <span className="text-dojo-blue font-bold">{trust}</span>
             </div>
             <div className="w-full h-2 bg-dojo-border rounded-full overflow-hidden">
-              <div className="h-full bg-dojo-blue rounded-full transition-all duration-500" style={{ width: `${trust}%` }} />
+              <div
+                className="h-full bg-dojo-blue rounded-full transition-all duration-500"
+                style={{ width: `${trust}%` }}
+              />
             </div>
           </div>
           <div className="flex-1">
@@ -102,7 +142,10 @@ export function TheRoom() {
               <span className="text-dojo-green font-bold">{effectiveness}</span>
             </div>
             <div className="w-full h-2 bg-dojo-border rounded-full overflow-hidden">
-              <div className="h-full bg-dojo-green rounded-full transition-all duration-500" style={{ width: `${effectiveness}%` }} />
+              <div
+                className="h-full bg-dojo-green rounded-full transition-all duration-500"
+                style={{ width: `${effectiveness}%` }}
+              />
             </div>
           </div>
         </div>
@@ -110,8 +153,12 @@ export function TheRoom() {
         {/* Last outcome */}
         {lastChoice && (
           <div className="dojo-card border-dojo-accent/20 animate-slide-up">
-            <p className="text-sm text-dojo-text/80 mb-2">{lastChoice.outcome}</p>
-            <p className="text-xs text-dojo-accent italic">{lastChoice.principle}</p>
+            <p className="text-sm text-dojo-text/80 mb-2">
+              {lastChoice.outcome}
+            </p>
+            <p className="text-xs text-dojo-accent italic">
+              {lastChoice.principle}
+            </p>
           </div>
         )}
 
@@ -140,7 +187,7 @@ export function TheRoom() {
           ))}
         </div>
       </div>
-    )
+    );
   }
 
   // Debrief
@@ -151,21 +198,36 @@ export function TheRoom() {
       {/* Final scores */}
       <div className="grid grid-cols-2 gap-4">
         <div className="dojo-card text-center">
-          <div className={`text-4xl font-bold ${trust >= 60 ? 'text-dojo-blue' : 'text-dojo-red'}`}>{trust}</div>
+          <div
+            className={`text-4xl font-bold ${trust >= 60 ? "text-dojo-blue" : "text-dojo-red"}`}
+          >
+            {trust}
+          </div>
           <div className="text-xs text-dojo-muted mt-1">Trust Score</div>
         </div>
         <div className="dojo-card text-center">
-          <div className={`text-4xl font-bold ${effectiveness >= 60 ? 'text-dojo-green' : 'text-dojo-red'}`}>{effectiveness}</div>
+          <div
+            className={`text-4xl font-bold ${effectiveness >= 60 ? "text-dojo-green" : "text-dojo-red"}`}
+          >
+            {effectiveness}
+          </div>
           <div className="text-xs text-dojo-muted mt-1">Effectiveness</div>
         </div>
       </div>
 
       {/* Choice history */}
       <div className="dojo-card space-y-4">
-        <h3 className="text-sm font-semibold uppercase tracking-wider text-dojo-muted">Your Choices</h3>
+        <h3 className="text-sm font-semibold uppercase tracking-wider text-dojo-muted">
+          Your Choices
+        </h3>
         {choiceHistory.map((ch) => (
-          <div key={ch.step} className="border-l-2 border-dojo-purple/30 pl-4 space-y-1">
-            <div className="text-xs text-dojo-purple">Decision {ch.step} — chose {ch.label}</div>
+          <div
+            key={ch.step}
+            className="border-l-2 border-dojo-purple/30 pl-4 space-y-1"
+          >
+            <div className="text-xs text-dojo-purple">
+              Decision {ch.step} — chose {ch.label}
+            </div>
             <p className="text-sm text-dojo-text/70">{ch.outcome}</p>
             <p className="text-xs text-dojo-accent italic">{ch.principle}</p>
           </div>
@@ -174,14 +236,22 @@ export function TheRoom() {
 
       {/* Debrief text */}
       <div className="dojo-card border-dojo-accent/30">
-        <h3 className="text-sm font-semibold text-dojo-accent uppercase tracking-wider mb-2">Takeaway</h3>
-        <p className="text-sm text-dojo-text/80 leading-relaxed">{scenario.debrief}</p>
+        <h3 className="text-sm font-semibold text-dojo-accent uppercase tracking-wider mb-2">
+          Takeaway
+        </h3>
+        <p className="text-sm text-dojo-text/80 leading-relaxed">
+          {scenario.debrief}
+        </p>
       </div>
 
       <div className="flex gap-3">
-        <button onClick={startGame} className="dojo-btn flex-1">Replay</button>
-        <Link to="/" className="dojo-btn flex-1 text-center">Back to Arena</Link>
+        <button onClick={startGame} className="dojo-btn flex-1">
+          Replay
+        </button>
+        <Link to="/" className="dojo-btn flex-1 text-center">
+          Back to Home
+        </Link>
       </div>
     </div>
-  )
+  );
 }

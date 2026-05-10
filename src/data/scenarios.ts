@@ -4,7 +4,7 @@ export const DIFFICULTY_LABELS: Record<Difficulty, string> = {
   easy: "Intern",
   medium: "Mid-Level PM",
   hard: "Senior PM",
-  nightmare: "VP Politics",
+  nightmare: "Executive Stakes",
 };
 
 export const DIFFICULTY_COLORS: Record<Difficulty, string> = {
@@ -651,5 +651,237 @@ export const REPLAY_SCENARIOS: ReplayScenario[] = [
     ],
     debrief:
       "This scenario tests your ability to handle a public challenge, gather data under pressure, and make a recommendation with conviction. The key principles: anti-sell (name your own risks), analytical rigor (get the data before deciding), managing up (no surprises, solutions-oriented), and conviction (stand behind your analysis while staying genuinely open to new information).",
+  },
+  {
+    id: "sr-2",
+    title: "The Skip-Level Trap",
+    difficulty: "hard",
+    premise:
+      "Your skip-level manager pulls you into a 1:1 and says: \"Your manager thinks the metered billing project is on track. I've heard from engineering it's actually behind. What's really going on?\" Reality: you ARE behind by two weeks, and your manager knows — you flagged it last Friday. But the skip-level is testing you. How you answer will shape trust for months.",
+    steps: [
+      {
+        narration:
+          "The skip-level is watching your face. You have about 5 seconds before silence gets awkward.",
+        choices: [
+          {
+            label: "A",
+            text: "\"We're two weeks behind — I flagged it to [manager] last Friday. Root cause is the payments API dependency. Here's the recovery plan we agreed on.\"",
+            trustDelta: 20,
+            effectivenessDelta: 15,
+            outcome:
+              "The skip-level nods. You've just demonstrated three things: you're honest, your manager isn't being kept in the dark, and you have a plan. This is exactly the answer that builds trust at this altitude.",
+            principle:
+              "No-surprise rule applied upward AND across. Never undermine your manager by revealing problems your skip thinks your manager doesn't know about. (Managing Up — Wes Kao)",
+          },
+          {
+            label: "B",
+            text: "\"It's on track. There are some dependencies we're managing but nothing major.\"",
+            trustDelta: -20,
+            effectivenessDelta: -10,
+            outcome:
+              "The skip-level already knows from engineering that you're behind. You just lied to a VP. Your credibility takes a hit that will take a year to repair. Later they'll ask your manager: \"Does your PM always hide problems?\"",
+            principle:
+              "Never lie up. Even small dodges to executives get detected — engineers talk, and executives compare notes. (Influence and Leadership)",
+          },
+          {
+            label: "C",
+            text: '"Honestly, engineering is dropping the ball on the payments dependency. I\'ve been blocked for weeks."',
+            trustDelta: -15,
+            effectivenessDelta: -15,
+            outcome:
+              "You just threw engineering under the bus and positioned yourself as a victim. The skip-level now sees you as someone who assigns blame instead of solving problems. Trust drops with both the skip AND engineering when they hear about it.",
+            principle:
+              '"Passive blame" framing — good PMs own problems they didn\'t create. The skip-level is evaluating your leadership, not your ability to find scapegoats. (Influence, Self-Development)',
+          },
+          {
+            label: "D",
+            text: '"Let me pull up the current status and walk you through it." (Opens laptop, starts scrolling through Jira)',
+            trustDelta: -5,
+            effectivenessDelta: -10,
+            outcome:
+              "You're stalling. The skip-level asked a direct question and you responded with a procedure. In the 45 seconds of scrolling, the skip forms the view that you either don't know your own project or you're hiding something.",
+            principle:
+              "When a senior leader asks a direct question, answer it in the first sentence. Stalling = hiding. (Managing Up, Meetings & Real-Time)",
+          },
+        ],
+      },
+      {
+        narration:
+          "The skip-level leans in: \"Okay. Here's what I'm hearing from the field: sales is losing three deals because metered billing isn't ready. Why shouldn't I reassign this project to a different PM who can move faster?\"",
+        choices: [
+          {
+            label: "A",
+            text: "\"That's a fair question. Here's why the two-week slip is real and unavoidable: [specific reason]. A new PM would hit the same dependency — and lose another 4 weeks ramping. The fastest path is staying the course and escalating the payments dependency, which I'm doing tomorrow with [name]. Can I get your backing on that escalation?\"",
+            trustDelta: 15,
+            effectivenessDelta: 20,
+            outcome:
+              "You didn't get defensive. You acknowledged the question was fair, made the analytical case against reassignment, and converted the threat into asking for help on the real blocker. The skip-level respects the pushback and commits support.",
+            principle:
+              'Steelman the threat, then make your case with data, then ask for what you actually need. "What would need to be true?" frame applied in reverse. (Analytical Thinking, Managing Up)',
+          },
+          {
+            label: "B",
+            text: '"I\'ve worked really hard on this project and I think I can get it back on track if you give me more time."',
+            trustDelta: -10,
+            effectivenessDelta: -15,
+            outcome:
+              "You made the argument about YOU, not the project. The skip doesn't care how hard you've worked — they care about the deals. You've just confirmed you don't understand what matters at this altitude.",
+            principle:
+              "Communication is strategy, not self-expression. The skip doesn't care about your feelings or effort — they care about outcomes. (Feedback & Difficult Conversations — Wes Kao)",
+          },
+          {
+            label: "C",
+            text: '"Whatever you think is best. I\'ll support whatever decision you make."',
+            trustDelta: -15,
+            effectivenessDelta: -10,
+            outcome:
+              "You just told a VP you have no conviction about your own project. They don't want servility — they want a PM who'll push back with rigor. The false-humility posture reads as lack of judgment.",
+            principle:
+              "The Humility Trap. False humility isn't a virtue — it's avoidance disguised as respect. (Self-Development — Shreyas Doshi)",
+          },
+        ],
+      },
+      {
+        narration:
+          "The skip-level stands up to end the meeting: \"Send me a one-pager by EOD tomorrow with the recovery plan and what you need from me. If I don't see it, I'm reassigning.\" What's the first thing you do when you leave the room?",
+        choices: [
+          {
+            label: "A",
+            text: 'DM your manager immediately: "Skip pulled me into a 1:1 — here\'s what was asked and what I committed to. Want to sync before I send the one-pager tomorrow."',
+            trustDelta: 15,
+            effectivenessDelta: 15,
+            outcome:
+              "Exactly right. Your manager will not be surprised by the skip's next conversation. You've preserved trust on both sides and set up a quick alignment before the deliverable.",
+            principle:
+              "The no-surprise rule runs in every direction. If your skip-level just asked you for something, your manager learns about it from YOU, not from the skip. (Managing Up)",
+          },
+          {
+            label: "B",
+            text: "Write the one-pager tonight and send it to the skip tomorrow morning, copying your manager.",
+            trustDelta: 0,
+            effectivenessDelta: -5,
+            outcome:
+              "Your manager reads the one-pager cold and learns for the first time that the skip has concerns about reassigning the PM. They're blindsided in front of their boss. You technically met the deadline but damaged trust with your direct manager.",
+            principle:
+              "Cc'ing your manager on a skip-level deliverable is NOT the same as looping them in. They need a heads-up first, not a fait accompli. (Managing Up)",
+          },
+          {
+            label: "C",
+            text: "Call the engineering lead and vent about how ridiculous the skip is being.",
+            trustDelta: -10,
+            effectivenessDelta: -10,
+            outcome:
+              'You just turned a solvable pressure situation into a political one. The eng lead mentions it in standup, word spreads, and you\'re now "the PM who complains about leadership." Professional tone matters everywhere, always.',
+            principle:
+              "Venting to partners about leadership is how PMs kill their credibility with the engineering team without realizing it. (Influence, Self-Development)",
+          },
+          {
+            label: "D",
+            text: "Do nothing yet — you want to think about it overnight and start the one-pager fresh tomorrow.",
+            trustDelta: -5,
+            effectivenessDelta: -5,
+            outcome:
+              "Your manager will hear about the skip 1:1 before you get around to telling them. Procrastination on communication IS a communication choice — and usually the wrong one. (Managing Up)",
+            principle:
+              "Speed matters in proactive communication. Waiting until you have the perfect message is how the no-surprise rule breaks.",
+          },
+        ],
+      },
+    ],
+    debrief:
+      "Skip-level 1:1s are high-stakes trust events. The principles at play: (1) never lie up, (2) never undermine your manager by revealing they don't know something, (3) answer direct questions directly, (4) steelman threats before responding to them, (5) loop your manager in the moment a skip asks you for anything. Getting any of these wrong costs months of trust rebuilding.",
+  },
+  {
+    id: "sr-3",
+    title: "The Launch-Day Bug",
+    difficulty: "medium",
+    premise:
+      "You're 2 hours into the launch of a new pricing model when a customer success manager pings you: \"Seven enterprise customers just got double-charged. Refund buttons aren't working. People are tweeting.\" You have a leadership all-hands in 90 minutes where you were going to announce the launch. What do you do?",
+    steps: [
+      {
+        narration:
+          "The first decision is about the next 10 minutes. What's the move?",
+        choices: [
+          {
+            label: "A",
+            text: "Rollback the launch immediately. Then: tell your manager, tell the CSM team, draft a customer comms, prep leadership.",
+            trustDelta: 15,
+            effectivenessDelta: 20,
+            outcome:
+              "Correct order. Stop the bleeding first. Every minute the broken launch is live, more customers get double-charged. The rollback buys time to do everything else properly.",
+            principle:
+              'When in an incident, stop the bleed before you communicate. "Rollback fast, explain carefully" is the P0 principle. (Product Strategy — Incident Response)',
+          },
+          {
+            label: "B",
+            text: "Call an emergency huddle with engineering to debug the refund button while keeping the launch live.",
+            trustDelta: -15,
+            effectivenessDelta: -20,
+            outcome:
+              "30 more customers get double-charged while you debug. The revenue team is now dealing with a full-blown crisis, and you're trying to fix forward instead of stopping the damage. This is the textbook wrong move.",
+            principle:
+              "Fixing forward on a revenue-impacting bug is almost always wrong. The rollback is reversible; the customer trust damage is not. (Product Strategy)",
+          },
+          {
+            label: "C",
+            text: "Update Twitter/social media to acknowledge the issue before rolling back, so customers know you're on it.",
+            trustDelta: -5,
+            effectivenessDelta: -10,
+            outcome:
+              "You've just made the incident more visible while it's still happening. PR before containment amplifies the damage. The correct sequence is contain → internal comms → customer comms → public comms.",
+            principle:
+              "Comms sequence in an incident: contain, inform internally, inform affected customers, then (only if needed) inform publicly. (Crisis Comms)",
+          },
+          {
+            label: "D",
+            text: "Cancel the all-hands announcement, then huddle with engineering to decide what to do.",
+            trustDelta: 0,
+            effectivenessDelta: -10,
+            outcome:
+              "You prioritized avoiding bad optics over stopping customer harm. Canceling the all-hands can wait — stopping the double-charges cannot. This is the wrong thing to prioritize first.",
+            principle:
+              "In incidents, prioritize customer harm > internal optics > your reputation. Always. (Crisis Comms)",
+          },
+        ],
+      },
+      {
+        narration:
+          'Rollback is in flight. Your manager asks: "The all-hands is in 75 minutes. Do you still want to announce, or do we cancel it?"',
+        choices: [
+          {
+            label: "A",
+            text: "\"Cancel the announcement. I'll use the slot to brief leadership on the incident, what we're doing about it, and the revised launch plan.\"",
+            trustDelta: 15,
+            effectivenessDelta: 15,
+            outcome:
+              "Leadership gets the news from you, in the scheduled slot, with a plan. You turned a reputational crisis into a trust-building moment. This is how senior PMs handle bad days.",
+            principle:
+              "Don't waste a crisis — use the existing leadership time to brief honestly, show you're in control, and propose next steps. (Managing Up, Influence)",
+          },
+          {
+            label: "B",
+            text: "\"Let's proceed with the announcement but mention the minor bug we\'re fixing.\"",
+            trustDelta: -20,
+            effectivenessDelta: -15,
+            outcome:
+              "Announcing a launch that just got rolled back reads as either delusional or dishonest. Someone in the all-hands will have already seen the customer tweets and call you out. You've undermined your own credibility.",
+            principle:
+              "Don\'t announce something that isn\'t true anymore. Your deck is not the source of truth — reality is. (Communication as Strategy)",
+          },
+          {
+            label: "C",
+            text: '"Cancel the all-hands slot entirely. I\'ll update leadership over email later today."',
+            trustDelta: -5,
+            effectivenessDelta: -10,
+            outcome:
+              "You gave up a captive audience of 40 leaders who wanted to hear from you. Email won't land the way in-person does. Leadership will ask each other in the hallway what happened, and speculation will be worse than the truth.",
+            principle:
+              "In-person > Slack > email for bad news. Use the channel with the most signal and the most trust. (Communication as Strategy)",
+          },
+        ],
+      },
+    ],
+    debrief:
+      "Incident response reveals what kind of PM someone is. The principles here: contain before you communicate, prioritize customer harm over internal optics, and use every available forum to demonstrate you're in control — even (especially) when you're not. The PMs who handle bad days well build more trust than the ones who handle good days well.",
   },
 ];

@@ -75,15 +75,12 @@ export function LiveSession() {
     if (!polling) return;
 
     const fetchSession = () => {
-      fetch("/api/active-session")
-        .then((r) => r.json())
+      // /api/* is gone since the API route was removed. Read directly from the
+      // static JSON in /progress/ — written by the local session-logger.
+      fetch("/progress/active-session.json")
+        .then((r) => (r.ok ? r.json() : null))
         .then(setSession)
-        .catch(() => {
-          fetch("/progress/active-session.json")
-            .then((r) => r.json())
-            .then(setSession)
-            .catch(() => {});
-        });
+        .catch(() => {});
     };
 
     fetchSession();
@@ -116,7 +113,7 @@ export function LiveSession() {
           to="/"
           className="text-sm text-dojo-muted hover:text-blue-400 transition-colors font-mono"
         >
-          ← back to arena
+          ← back to home
         </Link>
       </div>
     );
