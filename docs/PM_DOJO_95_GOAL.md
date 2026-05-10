@@ -18,7 +18,7 @@ PM Dojo reaches 9.5 when all of these are true:
 6. [x] The scorer explains whether the blocker is the draft or missing input context.
 7. [x] The test bank covers at least 80 authored PM cases across five artifact types and ten domains.
 8. [x] The Rubric Lab quality gate passes before we call an iteration shippable.
-9. [x] Unsafe PM calls (blame, slang, internal jargon, too short) trigger a `[REWRITE BLOCKED]` refusal rather than a polished output.
+9. [x] Unsafe PM calls (blame, slang, internal jargon, too short) trigger a `[Rewrite paused ...]` refusal rather than a polished output.
 10. [x] Customer replies never invent commitments the user did not state — the rewrite refuses with an `Accountability:` prompt instead.
 11. [x] Decision/Tradeoff/Evidence lines are checked for coherence: if Context evidence does not propagate to Decision or Tradeoff, the rewrite is capped and flagged.
 
@@ -59,7 +59,7 @@ These are honest gaps. The 9.5 bar above is a deterministic preflight bar, not a
 2. **Numeric facts are not validated for relevance.** "42% activation, 55% target, 16 customer requests" is treated as substantive evidence regardless of whether those numbers actually justify the decision being recommended.
 3. **The test bank is author-graded.** No external rater study, no inter-rater agreement, no correlation with how a strong PM would actually rank the same outputs. The bank shows the engine is internally consistent, not that the engine matches human judgment.
 4. **Customer accountability is prompted, not generated.** When a customer reply lacks a commitment or refusal-to-promise, PM Dojo refuses with an `Accountability:` line. It does not invent the commitment for you. This is intentional, but it means the user must close the loop themselves.
-5. **Rewrites refuse rather than invent.** Coherence violations, blocked PM calls, and missing accountability all surface as `[REWRITE BLOCKED ...]` sentinels rather than fabricated content. This is a feature for honesty, but a real PM tool will eventually need to ask better follow-up questions instead of just refusing.
+5. **Rewrites refuse rather than invent.** Coherence violations, blocked PM calls, and missing accountability all surface as `[Rewrite paused ...]` sentinels rather than fabricated content. This is a feature for honesty, but a real PM tool will eventually need to ask better follow-up questions instead of just refusing.
 6. **No retrieval, no memory.** Each review is stateless. PM Dojo cannot reference your past drafts, the company's prior decisions, or the recipient's known preferences.
 7. **No live-LLM review.** The scorer is fully deterministic regex + heuristic. That makes it stable and auditable, but it caps the ceiling on nuance.
 

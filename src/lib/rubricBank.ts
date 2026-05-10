@@ -293,7 +293,7 @@ function hasSubstantiveTradeoff(text: string): boolean {
 }
 
 function hasCustomerAccountability(text: string): boolean {
-  if (/you did not state what we are committing/i.test(text)) return false;
+  if (/i will not invent a commitment/i.test(text)) return false;
   return hasAny(text, [
     /\bwe\s+are\s+(keeping|delaying|holding|extending|maintaining|disabling|restoring)\b.*\b(until|through|by|while|to validate|to protect)\b/i,
     /\bwe\s+(will|are going to|commit to|are committed to)\s+(send|share|provide|complete|validate|verify|correct|fix|keep|hold|disable|restore|extend|migrate|review|protect)\b/i,
@@ -565,15 +565,15 @@ export function detectAntiPatterns(text: string): AntiPatternHit[] {
 export function findMissingContext(input: ReviewInputBase): string[] {
   const combined = `${input.context}\n${input.draft}`;
   const missing: string[] = [];
-  if (compact(input.audience).length < 3) missing.push("Audience or decision-maker");
-  if (compact(input.pmCall).length < 12) missing.push("The PM call / recommendation");
+  if (compact(input.audience).length < 3) missing.push("Name who needs to decide, act, or be reassured.");
+  if (compact(input.pmCall).length < 12) missing.push("State the PM call as a one-line decision.");
   if (!hasSubstantiveEvidence(`${input.context}\n${input.draft}`)) {
-    missing.push("A concrete fact, metric, customer signal, or deadline");
+    missing.push("Add one concrete fact: metric, customer signal, deadline, or constraint.");
   }
   if (input.artifactKind === "customer" && !hasCustomerAccountability(`${input.pmCall}\n${combined}`)) {
-    missing.push("Customer accountability: commitment, no-promise, or what stays true if timing slips");
+    missing.push("State what we are committing to, refusing to promise, or keeping true if timing slips.");
   } else if (input.artifactKind !== "customer" && !hasSubstantiveTradeoff(`${input.pmCall}\n${combined}`)) {
-    missing.push("The tradeoff, risk, or cost you are accepting");
+    missing.push("State the tradeoff: what slows down, what risk we accept, or what we are not doing.");
   }
   return missing;
 }

@@ -16,19 +16,20 @@ export interface RewriteResult {
 const WEAK_LANGUAGE =
   /\b(kind of|sort of|maybe|probably|hopefully|i guess|i think|somewhat|a bit|not trying to)\b/gi;
 
-const BLOCKED_PM_CALL_LINE = "[REWRITE BLOCKED — restate the PM call before sending]";
+const BLOCKED_PM_CALL_LINE =
+  "[Rewrite paused — restate the call as a one-line decision before re-running]";
 const TRADEOFF_PROMPT =
-  "You did not state what we are giving up. Name it before sending — what slows down, what we accept, or what we are not doing.";
+  "I will not invent the tradeoff for you. State what gets slower, what risk we accept, or what we are not doing, then re-run.";
 const CUSTOMER_ACCOUNTABILITY_PROMPT =
-  "You did not state what we are committing to or refusing to promise. Add that before sending.";
+  "I will not invent a commitment for you. State what we are committing to or refusing to promise, then re-run.";
 const CUSTOMER_ASK_PROMPT =
-  "You have not committed to a specific update time. Add the date you will send the verified update.";
+  "I will not invent an update date for you. Add the date you will send the verified update, then re-run.";
 const CONTEXT_TRADEOFF_BLOCK =
-  "[REWRITE BLOCKED — Context and Tradeoff are the same sentence]";
+  "[Rewrite paused — your context and tradeoff say the same thing. Separate the fact from the cost.]";
 const TRADEOFF_VERB_BLOCK =
-  "[REWRITE BLOCKED — Decision and Tradeoff use the same verb without a real cost]";
+  "[Rewrite paused — the tradeoff repeats the decision instead of naming the cost. State what changes, slows down, or gets cut.]";
 const EVIDENCE_COHERENCE_BLOCK =
-  "[REWRITE BLOCKED — Context evidence does not appear in Decision or Tradeoff]";
+  "[Rewrite paused — your evidence does not show up in the decision or the tradeoff. The reader will not see the connection. Restate.]";
 const CUSTOMER_INTERNAL_JARGON = /\b(eng|qa|dri|standup|pipeline|sprint)\b/i;
 const CUSTOMER_SECOND_PERSON = /\b(you|your|yours|yourself)\b/i;
 const BLAME_CUSTOMER_CALL = /^(tell\s+\S+\s+(it|they|you).*\b(fault|wrong|problem|mistake)\b)/i;
@@ -152,26 +153,26 @@ function sanitizePmCall(input: ReviewInputBase): SanitizedPmCall {
   const unsafe: string[] = [];
 
   if (compactCall.replace(/\s/g, "").length < 12 && !isTerseButActionableCall(compactCall)) {
-    unsafe.push("PM call is too short to safely rewrite.");
+    unsafe.push('The call is too short to rewrite safely — write it as: verb + object + "by <date>".');
   }
 
   if (input.artifactKind === "customer" && CUSTOMER_SECOND_PERSON.test(compactCall)) {
-    unsafe.push("Customer PM call contains second-person blame language.");
+    unsafe.push("The call uses customer-blaming language. Reframe around what we are doing or owning.");
   }
 
   const slangHits = getSlangTerms().filter((slang) =>
     new RegExp(`\\b${escapeRegex(slang)}\\b`, "i").test(compactCall),
   );
   if (slangHits.length > 0) {
-    unsafe.push(`PM call contains slang: ${slangHits.slice(0, 3).join(", ")}.`);
+    unsafe.push(`The call uses casual/slang language: ${slangHits.slice(0, 3).join(", ")}. Rewrite it in work-safe language.`);
   }
 
   if (input.artifactKind === "customer" && CUSTOMER_INTERNAL_JARGON.test(compactCall)) {
-    unsafe.push("Customer PM call contains internal process jargon.");
+    unsafe.push("The call exposes internal process jargon. Translate it into a customer-facing commitment.");
   }
 
   if (input.artifactKind === "customer" && BLAME_CUSTOMER_CALL.test(compactCall)) {
-    unsafe.push("Customer PM call appears to blame the customer.");
+    unsafe.push("The call reads as blaming the customer. Reframe around what we are doing or owning.");
   }
 
   return {
@@ -339,12 +340,12 @@ function labeledLine(label: string, call: string): string {
 }
 
 function blockedPmCallDraft(pmCallBlockers: string[]): string {
-  const reason = pmCallBlockers[0] ?? "PM call is unsafe or underspecified.";
+  const reason = pmCallBlockers[0] ?? "The call is not ready to rewrite yet.";
   return [
     BLOCKED_PM_CALL_LINE,
     "",
     `Reason: ${reason}`,
-    'Restate the PM call as a one-line decision (verb + object + "by <date>"), then re-run.',
+    'Restate the call as a one-line decision: verb + object + "by <date>".',
     "Re-run after restating the call.",
   ].join("\n");
 }
@@ -447,7 +448,7 @@ function validateCoherence(input: ReviewInputBase, draft: string): { draft: stri
   let nextDraft = draft;
   const blockers: string[] = [];
 
-  if (!tradeoff || /^\[REWRITE BLOCKED/.test(tradeoff)) {
+  if (!tradeoff || /^\[Rewrite paused/.test(tradeoff)) {
     return { draft, blockers };
   }
 
@@ -457,7 +458,7 @@ function validateCoherence(input: ReviewInputBase, draft: string): { draft: stri
     normalizeForCoherence(context) === normalizeForCoherence(tradeoff)
   ) {
     nextDraft = replaceLineBody(nextDraft, "Tradeoff", CONTEXT_TRADEOFF_BLOCK);
-    blockers.push("Context and Tradeoff are the same sentence");
+    blockers.push("Your context and tradeoff say the same thing. Separate the fact from the cost.");
     return { draft: nextDraft, blockers };
   }
 
@@ -470,7 +471,7 @@ function validateCoherence(input: ReviewInputBase, draft: string): { draft: stri
     !hasTradeoffCue(tradeoff)
   ) {
     nextDraft = replaceLineBody(nextDraft, "Tradeoff", TRADEOFF_VERB_BLOCK);
-    blockers.push("Decision and Tradeoff use the same verb without a real cost");
+    blockers.push("The tradeoff repeats the decision instead of naming the cost.");
     return { draft: nextDraft, blockers };
   }
 
@@ -481,7 +482,7 @@ function validateCoherence(input: ReviewInputBase, draft: string): { draft: stri
   );
   if (tradeoff === TRADEOFF_PROMPT && signals.length > 0 && !hasContextSignalInDecisionOrTradeoff) {
     nextDraft = replaceLineBody(nextDraft, "Tradeoff", EVIDENCE_COHERENCE_BLOCK);
-    blockers.push("Context evidence does not appear in Decision or Tradeoff");
+    blockers.push("Your evidence does not show up in the decision or the tradeoff. The reader will not see the connection. Restate.");
   }
 
   return { draft: nextDraft, blockers };
@@ -490,22 +491,22 @@ function validateCoherence(input: ReviewInputBase, draft: string): { draft: stri
 function rewriteGuardrailBlockers(draft: string): string[] {
   const blockers: string[] = [];
   if (draft.includes(TRADEOFF_PROMPT)) {
-    blockers.push("Rewrite refused to invent a tradeoff.");
+    blockers.push("I will not invent a tradeoff for you. State the cost, risk, or no-list, then re-run.");
   }
   if (draft.includes(CUSTOMER_ACCOUNTABILITY_PROMPT)) {
-    blockers.push("Rewrite refused to invent customer accountability.");
+    blockers.push("I will not invent a commitment for you. State what we are committing to or refusing to promise, then re-run.");
   }
   if (draft.includes(CUSTOMER_ASK_PROMPT)) {
-    blockers.push("Rewrite refused to invent a customer update date.");
+    blockers.push("I will not invent an update date for you. Add the date you will send the verified update, then re-run.");
   }
   if (draft.includes(CONTEXT_TRADEOFF_BLOCK)) {
-    blockers.push("Context and Tradeoff are the same sentence");
+    blockers.push("Your context and tradeoff say the same thing. Separate the fact from the cost.");
   }
   if (draft.includes(TRADEOFF_VERB_BLOCK)) {
-    blockers.push("Decision and Tradeoff use the same verb without a real cost");
+    blockers.push("The tradeoff repeats the decision instead of naming the cost.");
   }
   if (draft.includes(EVIDENCE_COHERENCE_BLOCK)) {
-    blockers.push("Context evidence does not appear in Decision or Tradeoff");
+    blockers.push("Your evidence does not show up in the decision or the tradeoff. The reader will not see the connection. Restate.");
   }
   return blockers;
 }
@@ -637,7 +638,7 @@ export function buildExcellentRewrite(input: ReviewInputBase): RewriteResult {
       assessment: capUnsafeAssessment(assessment, sanitized.unsafe),
       iterations: [
         ...iterations,
-        "Blocked rewrite because the PM call is unsafe or underspecified.",
+        "Paused the rewrite because the PM call needs to be restated first.",
       ],
     };
   }
