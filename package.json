@@ -11,7 +11,8 @@
     "rubric:iterations": "node scripts/run-workflow-iterations.cjs",
     "probe": "node scripts/probe-adversarial.cjs",
     "stress": "node scripts/stress-synthetic.cjs",
-    "gate": "npm run typecheck && npm run rubric:lab && npm run rubric:iterations && npm run probe"
+    "gate": "npm run typecheck && npm run rubric:lab && npm run rubric:iterations && npm run probe",
+    "verify": "npm run gate && npm run stress && npm run build"
   },
   "dependencies": {
     "react": "^19.0.0",
