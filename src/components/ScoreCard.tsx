@@ -43,7 +43,7 @@ export function ScoreCard({ scores, modelAnswer, principles }: ScoreCardProps) {
       </div>
 
       {/* Individual scores */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
         {scores.map((s) => (
           <div key={s.label} className="dojo-card text-center">
             <div

@@ -3,3 +3,7 @@ dist/
 .claude/
 *.local
 .DS_Store
+.vite/
+test-results/
+playwright-report/
+tsconfig.tsbuildinfo

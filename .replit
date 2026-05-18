@@ -1,0 +1,21 @@
+modules = ["nodejs-20"]
+
+run = "npm run dev:replit"
+
+hidden = [".config", "package-lock.json", "node_modules", "dist"]
+
+[nix]
+channel = "stable-24_05"
+
+[deployment]
+deploymentTarget = "static"
+build = ["npm", "run", "build"]
+publicDir = "dist"
+
+[[ports]]
+localPort = 5000
+externalPort = 80
+
+[[ports]]
+localPort = 4173
+externalPort = 4173

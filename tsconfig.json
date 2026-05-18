@@ -17,5 +17,11 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src"]
+  "include": [
+    "src/main.tsx",
+    "src/index.css",
+    "src/vite-env.d.ts",
+    "src/pmdojo/**/*.ts",
+    "src/pmdojo/**/*.tsx"
+  ]
 }

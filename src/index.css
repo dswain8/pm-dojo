@@ -1,43 +1,141 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+:root {
+  --bg: #0e0f14;
+  --bg2: #14161d;
+  --panel: #1a1d26;
+  --panel2: #20232e;
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.14);
+  --ink: #f5f3ee;
+  --dim: rgba(245, 243, 238, 0.55);
+  --dimmer: rgba(245, 243, 238, 0.32);
+  --hot: #ff5b3a;
+  --gold: #ffc53a;
+  --mint: #5ef2b0;
+  --sky: #6eaaff;
+  --orchid: #c888ff;
+}
 
-@layer base {
-  body {
-    @apply antialiased;
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+html {
+  background: var(--bg);
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Geist', system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+textarea::placeholder {
+  color: var(--dimmer);
+}
+
+::selection {
+  background: rgba(var(--gold-rgb), 0.28);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
   }
 
-  ::selection {
-    @apply bg-dojo-accent/30 text-white;
-  }
-
-  textarea {
-    @apply bg-dojo-card border border-dojo-border rounded-lg p-4 text-dojo-text font-mono text-sm
-           focus:outline-none focus:border-dojo-accent/50 focus:ring-1 focus:ring-dojo-accent/30
-           resize-none;
+  50% {
+    opacity: 0.5;
   }
 }
 
-@layer components {
-  .dojo-btn {
-    @apply px-6 py-3 rounded-lg font-semibold text-sm uppercase tracking-wider
-           transition-all duration-200 cursor-pointer
-           border border-dojo-border
-           hover:border-dojo-accent hover:text-dojo-accent hover:shadow-lg hover:shadow-dojo-accent/10
-           active:scale-95;
+@keyframes glow {
+  0%,
+  100% {
+    box-shadow:
+      0 10px 30px rgba(var(--gold-rgb), 0.3),
+      inset 0 -3px 0 rgba(0, 0, 0, 0.25);
   }
 
-  .dojo-btn-primary {
-    @apply dojo-btn bg-dojo-accent text-dojo-bg border-dojo-accent
-           hover:bg-dojo-accent/90 hover:text-dojo-bg hover:border-dojo-accent;
+  50% {
+    box-shadow:
+      0 10px 40px rgba(var(--gold-rgb), 0.5),
+      inset 0 -3px 0 rgba(0, 0, 0, 0.25);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
   }
 
-  .dojo-card {
-    @apply bg-dojo-card border border-dojo-border rounded-xl p-6;
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@media (max-width: 760px) {
+  html,
+  body,
+  #root {
+    overflow-x: hidden;
   }
 
-  .score-circle {
-    @apply w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold
-           border-2 animate-score-reveal;
+  [style*='grid-template-columns'] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  [style*='padding: 38px 48px'],
+  [style*='padding: 40px 48px'],
+  [style*='padding: 40px 40px'],
+  [style*='padding: 14px 28px'] {
+    padding-left: 18px !important;
+    padding-right: 18px !important;
+  }
+
+  [style*='font-size: 180px'] {
+    font-size: 120px !important;
+  }
+
+  button,
+  input,
+  textarea {
+    max-width: 100%;
   }
 }
