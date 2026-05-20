@@ -74,7 +74,6 @@ export function Home() {
   }, [displayText, typing, situationIdx])
 
   const belt = profile ? BELT_DISPLAY[profile.belt.current] || BELT_DISPLAY.white : BELT_DISPLAY.white
-  const bossAvailable = profile && profile.belt.sessions_total >= profile.next_boss_at
 
   return (
     <div className="space-y-8">
@@ -171,6 +170,10 @@ export function Home() {
         </div>
       </div>
 
+      <p className="text-center text-sm text-dojo-muted font-mono">
+        Self-graded PM writing practice · ~20 scenarios · no login
+      </p>
+
       {/* === MODE CARDS === */}
       <div className="grid grid-cols-2 gap-3">
         {MODES.map((mode) => (
@@ -197,25 +200,7 @@ export function Home() {
         ))}
       </div>
 
-      {/* Boss fight banner */}
-      {bossAvailable && (
-        <div className="border border-amber-500/40 rounded-xl p-4 bg-amber-500/5 text-center">
-          <span className="text-amber-400 font-mono text-sm font-bold">
-            ⚡ BOSS FIGHT AVAILABLE — Type /spar boss in Claude Code
-          </span>
-        </div>
-      )}
-
-      {/* Navigation */}
-      <div className="flex justify-center gap-6">
-        <Link
-          to="/live"
-          className="group inline-flex items-center gap-2 font-mono text-sm text-blue-400 hover:text-white transition-colors"
-        >
-          <span className="text-emerald-400">$</span>
-          <span className="uppercase tracking-widest font-semibold">live companion</span>
-          <span className="group-hover:translate-x-1 transition-transform">→</span>
-        </Link>
+      <div className="flex justify-center">
         <Link
           to="/progress"
           className="group inline-flex items-center gap-2 font-mono text-sm text-dojo-muted hover:text-white transition-colors"
@@ -226,8 +211,8 @@ export function Home() {
         </Link>
       </div>
 
-      <div className="text-center text-[10px] font-mono text-dojo-muted/20 pt-4">
-        knowledge_base: shreyas_doshi, wes_kao, april_dunford | modes: 4 + boss fights | wiki: 10 topics
+      <div className="text-center text-[10px] font-mono text-dojo-muted/30 pt-4">
+        inspired by shreyas doshi · wes kao · april dunford
       </div>
     </div>
   )

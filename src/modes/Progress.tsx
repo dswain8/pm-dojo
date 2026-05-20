@@ -13,12 +13,20 @@ export function Progress() {
     {} as Record<string, number>
   )
 
-  const modeLabels: Record<string, string> = {
-    'quick-draw': '⚡ Quick Draw',
-    'rewrite': '✏️ Rewrite Arena',
-    'concept-clinic': '🧠 Concept Clinic',
-    'scenario': '🎭 Scenario Replay',
-  }
+  const modes = [
+    { key: 'inbox-fire', label: '🔥 Inbox Fire', legacy: ['quick-draw'] },
+    { key: 'the-room', label: '🚪 The Room', legacy: ['scenario'] },
+    { key: 'red-pen', label: '✂️ Red Pen', legacy: ['rewrite'] },
+    { key: 'first-principles', label: '🧠 First Principles', legacy: ['concept-clinic'] },
+  ] as const
+
+  const modeLabel = (mode: string) =>
+    modes.find((m) => m.key === mode)?.label ??
+    modes.flatMap((m) => m.legacy.map((l) => ({ legacy: l, label: m.label }))).find((x) => x.legacy === mode)?.label ??
+    mode
+
+  const countForMode = (key: string, legacy: readonly string[]) =>
+    (byMode[key] || 0) + legacy.reduce((sum, k) => sum + (byMode[k] || 0), 0)
 
   // Recent sessions (last 10)
   const recent = [...sessions].reverse().slice(0, 10)
@@ -61,8 +69,8 @@ export function Progress() {
       <div className="dojo-card">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-dojo-muted mb-4">By Mode</h2>
         <div className="space-y-3">
-          {Object.entries(modeLabels).map(([key, label]) => {
-            const count = byMode[key] || 0
+          {modes.map(({ key, label, legacy }) => {
+            const count = countForMode(key, legacy)
             const pct = sessions.length > 0 ? (count / sessions.length) * 100 : 0
             return (
               <div key={key}>
@@ -90,7 +98,9 @@ export function Progress() {
             <div key={i} className="flex items-center justify-between text-sm py-2 border-b border-dojo-border last:border-0">
               <div>
                 <span className="text-dojo-text">{s.scenarioTitle}</span>
-                <span className="text-dojo-muted ml-2 text-xs">{s.difficulty}</span>
+                <span className="text-dojo-muted ml-2 text-xs">
+                  {modeLabel(s.mode)} · {s.difficulty}
+                </span>
               </div>
               <div className="text-dojo-accent font-bold">
                 {Object.values(s.scores).reduce((a, b) => a + b, 0)}

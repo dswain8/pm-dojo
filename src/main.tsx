@@ -1,13 +1,12 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import App from './App'
 import { Home } from './modes/Home'
 import { InboxFire } from './modes/InboxFire'
 import { RedPen } from './modes/RedPen'
 import { FirstPrinciples } from './modes/FirstPrinciples'
 import { TheRoom } from './modes/TheRoom'
-import { LiveSession } from './modes/LiveSession'
 import { Progress } from './modes/Progress'
 import './index.css'
 
@@ -21,7 +20,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <Route path="red-pen" element={<RedPen />} />
           <Route path="first-principles" element={<FirstPrinciples />} />
           <Route path="the-room" element={<TheRoom />} />
-          <Route path="live" element={<LiveSession />} />
+          <Route path="live" element={<Navigate to="/" replace />} />
           <Route path="progress" element={<Progress />} />
         </Route>
       </Routes>

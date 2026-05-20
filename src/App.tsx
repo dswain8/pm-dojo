@@ -19,9 +19,6 @@ export default function App() {
               Arena
             </Link>
           )}
-          <Link to="/live" className="text-blue-400 hover:text-white text-sm transition-colors font-medium">
-            Live
-          </Link>
           <Link to="/progress" className="text-dojo-muted hover:text-dojo-text text-sm transition-colors">
             Progress
           </Link>
