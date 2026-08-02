@@ -65,6 +65,12 @@ export default async function handler(req: Request) {
         429
       )
     }
+    if (message.includes('503') || message.toLowerCase().includes('high demand')) {
+      return json(
+        { error: 'Gemini is busy right now. Hit Retry in a few seconds.' },
+        503
+      )
+    }
     if (message.includes('aborted') || message.includes('AbortError')) {
       return json({ error: 'Grading timed out. Try again.' }, 504)
     }

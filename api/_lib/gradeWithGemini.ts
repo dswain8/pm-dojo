@@ -55,50 +55,7 @@ function extractJson(text: string): GradeResult {
   return JSON.parse(trimmed.slice(start, end + 1)) as GradeResult
 }
 
-export async function gradeWithGemini(
-  apiKey: string,
-  scenario: GradeScenarioInput,
-  userAnswer: string
-): Promise<GradeResult> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 22000)
-
-  let res: Response
-  try {
-    res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      signal: controller.signal,
-      body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ text: buildPrompt(scenario, userAnswer) }] }],
-        generationConfig: {
-          temperature: 0.2,
-          maxOutputTokens: 700,
-          thinkingConfig: { thinkingBudget: 256 },
-        },
-      }),
-    })
-  } finally {
-    clearTimeout(timeout)
-  }
-
-  if (res.status === 429) {
-    const errText = await res.text().catch(() => '')
-    throw new Error(`Gemini error 429: ${errText.slice(0, 400)}`)
-  }
-  if (!res.ok) {
-    const errText = await res.text().catch(() => '')
-    throw new Error(`Gemini error ${res.status}: ${errText.slice(0, 400)}`)
-  }
-
-  const data = (await res.json()) as {
-    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>
-  }
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text
-  if (!text) throw new Error('Empty Gemini response')
-
-  const parsed = extractJson(text)
+function toResult(parsed: GradeResult): GradeResult {
   return {
     clarity: clamp(parsed.clarity),
     strategy: clamp(parsed.strategy),
@@ -110,4 +67,59 @@ export async function gradeWithGemini(
     },
     takeaway: String(parsed.takeaway || 'Lead with the point next time.'),
   }
+}
+
+export async function gradeWithGemini(
+  apiKey: string,
+  scenario: GradeScenarioInput,
+  userAnswer: string
+): Promise<GradeResult> {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`
+  const body = JSON.stringify({
+    contents: [{ role: 'user', parts: [{ text: buildPrompt(scenario, userAnswer) }] }],
+    generationConfig: {
+      temperature: 0.2,
+      maxOutputTokens: 700,
+      thinkingConfig: { thinkingBudget: 256 },
+    },
+  })
+
+  let lastError = 'Grading failed'
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 20000)
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+        body,
+      })
+
+      if (res.status === 503 || res.status === 429) {
+        lastError = `Gemini error ${res.status}: ${await res.text().catch(() => '')}`
+        if (attempt === 0) {
+          await new Promise((r) => setTimeout(r, res.status === 503 ? 1200 : 2000))
+          continue
+        }
+        throw new Error(lastError.slice(0, 400))
+      }
+
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '')
+        throw new Error(`Gemini error ${res.status}: ${errText.slice(0, 400)}`)
+      }
+
+      const data = (await res.json()) as {
+        candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>
+      }
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text
+      if (!text) throw new Error('Empty Gemini response')
+      return toResult(extractJson(text))
+    } finally {
+      clearTimeout(timeout)
+    }
+  }
+
+  throw new Error(lastError.slice(0, 400))
 }
