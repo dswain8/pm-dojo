@@ -32,7 +32,7 @@ function clamp(n: unknown): number {
 }
 
 function buildPrompt(scenario: GradeScenarioInput, userAnswer: string): string {
-  return `PM writing coach. Score the answer 0-10 on Clarity, Strategy, Substance.
+  return `PM writing coach. Score 0-10 on Clarity, Strategy, Substance.
 
 Scenario: ${scenario.title}
 Setup: ${scenario.setup}
@@ -42,7 +42,7 @@ Rubric — Clarity: ${scenario.gradingHints.clarity} | Strategy: ${scenario.grad
 Model answer: ${scenario.modelAnswer}
 User answer: ${userAnswer.trim() || '(empty)'}
 
-Be strict. Mid answers are 4-7. Each feedback line: one short sentence about what THEY wrote.
+Be strict. Mid answers are 4-7. One short feedback sentence per dimension.
 Return ONLY JSON:
 {"clarity":0,"strategy":0,"substance":0,"feedback":{"clarity":"...","strategy":"...","substance":"..."},"takeaway":"..."}`
 }
@@ -55,38 +55,38 @@ function extractJson(text: string): GradeResult {
   return JSON.parse(trimmed.slice(start, end + 1)) as GradeResult
 }
 
-async function callOnce(apiKey: string, prompt: string): Promise<Response> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 60000)
-  try {
-    return await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      signal: controller.signal,
-      body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.2, maxOutputTokens: 4096 },
-      }),
-    })
-  } finally {
-    clearTimeout(timeout)
-  }
-}
-
 export async function gradeWithGemini(
   apiKey: string,
   scenario: GradeScenarioInput,
   userAnswer: string
 ): Promise<GradeResult> {
-  const prompt = buildPrompt(scenario, userAnswer)
-  const res = await callOnce(apiKey, prompt)
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 20000)
+
+  let res: Response
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal,
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ text: buildPrompt(scenario, userAnswer) }] }],
+        generationConfig: {
+          temperature: 0.2,
+          maxOutputTokens: 800,
+          thinkingConfig: { thinkingBudget: 512 },
+        },
+      }),
+    })
+  } finally {
+    clearTimeout(timeout)
+  }
 
   if (res.status === 429) {
     const errText = await res.text().catch(() => '')
     throw new Error(`Gemini error 429: ${errText.slice(0, 400)}`)
   }
-
   if (!res.ok) {
     const errText = await res.text().catch(() => '')
     throw new Error(`Gemini error ${res.status}: ${errText.slice(0, 400)}`)
