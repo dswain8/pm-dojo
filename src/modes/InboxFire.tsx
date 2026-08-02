@@ -11,20 +11,9 @@ import {
   DIFFICULTY_COLORS,
 } from '../data/scenarios'
 import { saveSession } from '../lib/storage'
+import { requestGrade, scoresRecord, type GradeResult } from '../lib/gradeApi'
 
 type Phase = 'pick' | 'write' | 'grading' | 'results'
-
-interface GradeResult {
-  clarity: number
-  strategy: number
-  substance: number
-  feedback: {
-    clarity: string
-    strategy: string
-    substance: string
-  }
-  takeaway: string
-}
 
 export function InboxFire() {
   const [difficulty, setDifficulty] = useState<Difficulty>('medium')
@@ -63,39 +52,25 @@ export function InboxFire() {
     setGradeError(null)
 
     try {
-      const res = await fetch('/api/grade', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          scenario: {
-            title: scen.title,
-            setup: scen.setup,
-            task: scen.task,
-            principles: scen.principles,
-            modelAnswer: scen.modelAnswer,
-            gradingHints: scen.gradingHints,
-          },
-          userAnswer: answer,
-        }),
+      const result = await requestGrade({
+        mode: 'inbox-fire',
+        scenario: {
+          title: scen.title,
+          setup: scen.setup,
+          task: scen.task,
+          principles: scen.principles,
+          modelAnswer: scen.modelAnswer,
+          gradingHints: scen.gradingHints,
+        },
+        userAnswer: answer,
       })
-
-      const data = await res.json()
-      if (!res.ok) {
-        throw new Error(data.error || 'Grading failed')
-      }
-
-      const result = data as GradeResult
       setGrade(result)
       saveSession({
         mode: 'inbox-fire',
         scenarioId: scen.id,
         scenarioTitle: scen.title,
         difficulty: scen.difficulty,
-        scores: {
-          clarity: result.clarity,
-          strategy: result.strategy,
-          substance: result.substance,
-        },
+        scores: scoresRecord(result),
         timestamp: Date.now(),
       })
       setPhase('results')
@@ -238,7 +213,8 @@ export function InboxFire() {
             <div className="text-4xl animate-pulse">⚔️</div>
             <h2 className="text-xl font-bold">Grading your response…</h2>
             <p className="text-sm text-dojo-muted">
-              Scoring clarity, strategy, and substance. If free-tier is busy this can take up to a minute.
+              Scoring clarity, strategy, and substance. If free-tier is busy this can take
+              up to a minute.
             </p>
           </>
         )}
@@ -253,29 +229,13 @@ export function InboxFire() {
       <h2 className="text-xl font-bold">{scenario.title} — Results</h2>
 
       <ScoreCard
-        scores={[
-          {
-            label: 'Clarity',
-            value: grade.clarity,
-            max: 10,
-            color: 'dojo-green',
-            feedback: grade.feedback.clarity,
-          },
-          {
-            label: 'Strategy',
-            value: grade.strategy,
-            max: 10,
-            color: 'dojo-blue',
-            feedback: grade.feedback.strategy,
-          },
-          {
-            label: 'Substance',
-            value: grade.substance,
-            max: 10,
-            color: 'dojo-purple',
-            feedback: grade.feedback.substance,
-          },
-        ]}
+        scores={grade.dimensions.map((d) => ({
+          label: d.label,
+          value: d.value,
+          max: d.max,
+          color: 'dojo-accent',
+          feedback: d.feedback,
+        }))}
         takeaway={grade.takeaway}
         yourResponse={response}
         modelAnswer={scenario.modelAnswer}

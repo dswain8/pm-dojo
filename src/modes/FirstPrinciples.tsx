@@ -1,66 +1,114 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { DifficultyPicker } from '../components/DifficultyPicker'
-import { type Difficulty, CONCEPT_SCENARIOS, DIFFICULTY_COLORS } from '../data/scenarios'
+import { ScoreCard } from '../components/ScoreCard'
+import {
+  type Difficulty,
+  type ConceptScenario,
+  CONCEPT_SCENARIOS,
+  DIFFICULTY_COLORS,
+} from '../data/scenarios'
 import { saveSession } from '../lib/storage'
+import { requestGrade, scoresRecord, type GradeResult } from '../lib/gradeApi'
 
-type Phase = 'pick' | 'think' | 'answer' | 'reveal'
+type Phase = 'pick' | 'think' | 'grading' | 'results'
 
 export function FirstPrinciples() {
   const [difficulty, setDifficulty] = useState<Difficulty>('easy')
   const [phase, setPhase] = useState<Phase>('pick')
-  const [scenarioIdx, setScenarioIdx] = useState(0)
+  const [scenario, setScenario] = useState<ConceptScenario | null>(null)
   const [principle, setPrinciple] = useState('')
   const [application, setApplication] = useState('')
-  const [selfScore, setSelfScore] = useState({ identification: 3, application: 3 })
+  const [grade, setGrade] = useState<GradeResult | null>(null)
+  const [gradeError, setGradeError] = useState<string | null>(null)
+  const gradingLock = useRef(false)
+  const principleRef = useRef('')
+  const applicationRef = useRef('')
 
   const filtered = useMemo(
     () => CONCEPT_SCENARIOS.filter((s) => s.difficulty === difficulty),
     [difficulty]
   )
 
-  const scenario = filtered[scenarioIdx] ?? null
-
   const startRound = useCallback(() => {
-    setScenarioIdx(Math.floor(Math.random() * filtered.length))
+    const pick = filtered[Math.floor(Math.random() * filtered.length)]
+    setScenario(pick)
     setPrinciple('')
     setApplication('')
-    setSelfScore({ identification: 3, application: 3 })
+    principleRef.current = ''
+    applicationRef.current = ''
+    setGrade(null)
+    setGradeError(null)
+    gradingLock.current = false
     setPhase('think')
   }, [filtered])
 
-  const submitAnswer = useCallback(() => {
-    setPhase('reveal')
+  const runGrading = useCallback(async (scen: ConceptScenario) => {
+    if (gradingLock.current) return
+    gradingLock.current = true
+    setPhase('grading')
+    setGradeError(null)
+
+    try {
+      const result = await requestGrade({
+        mode: 'first-principles',
+        payload: {
+          title: scen.title,
+          situation: scen.situation,
+          bestAnswer: scen.bestAnswer,
+          relatedPrinciples: scen.relatedPrinciples,
+          principle: principleRef.current,
+          application: applicationRef.current,
+        },
+      })
+      setGrade(result)
+      saveSession({
+        mode: 'first-principles',
+        scenarioId: scen.id,
+        scenarioTitle: scen.title,
+        difficulty: scen.difficulty,
+        scores: scoresRecord(result),
+        timestamp: Date.now(),
+      })
+      setPhase('results')
+    } catch (err) {
+      gradingLock.current = false
+      setGradeError(err instanceof Error ? err.message : 'Grading failed')
+      setPhase('grading')
+    }
   }, [])
 
-  const saveAndNext = useCallback(() => {
-    if (!scenario) return
-    saveSession({
-      mode: 'first-principles',
-      scenarioId: scenario.id,
-      scenarioTitle: scenario.title,
-      difficulty: scenario.difficulty,
-      scores: selfScore,
-      timestamp: Date.now(),
-    })
+  const playAgain = useCallback(() => {
     setPhase('pick')
-  }, [scenario, selfScore])
+    setScenario(null)
+    setGrade(null)
+    setGradeError(null)
+    gradingLock.current = false
+  }, [])
 
   if (phase === 'pick') {
     return (
       <div className="space-y-8">
         <div>
-          <Link to="/" className="text-dojo-muted text-sm hover:text-dojo-accent">← Arena</Link>
+          <Link to="/" className="text-dojo-muted text-sm hover:text-dojo-accent">
+            ← Arena
+          </Link>
           <h1 className="text-3xl font-bold mt-4">
             <span className="text-dojo-blue">🧠</span> First Principles
           </h1>
-          <p className="text-dojo-muted mt-2">Messy problem. No frameworks to name — just think it through.</p>
+          <p className="text-dojo-muted mt-2">
+            Messy problem. Name the principle, apply it — then get AI-scored.
+          </p>
         </div>
         <div className="dojo-card space-y-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-dojo-muted">Difficulty</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-dojo-muted">
+            Difficulty
+          </h2>
           <DifficultyPicker value={difficulty} onChange={setDifficulty} />
         </div>
-        <button onClick={startRound} className="dojo-btn-primary w-full">Start</button>
+        <button onClick={startRound} className="dojo-btn-primary w-full">
+          Start
+        </button>
       </div>
     )
   }
@@ -71,14 +119,18 @@ export function FirstPrinciples() {
     return (
       <div className="space-y-6">
         <div>
-          <span className={`text-xs font-semibold uppercase tracking-wider ${DIFFICULTY_COLORS[scenario.difficulty]}`}>
+          <span
+            className={`text-xs font-semibold uppercase tracking-wider ${DIFFICULTY_COLORS[scenario.difficulty]}`}
+          >
             {scenario.difficulty}
           </span>
           <h2 className="text-xl font-bold mt-1">{scenario.title}</h2>
         </div>
 
         <div className="dojo-card border-dojo-blue/30">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-dojo-blue mb-3">Situation</h3>
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-dojo-blue mb-3">
+            Situation
+          </h3>
           <p className="text-sm leading-relaxed">{scenario.situation}</p>
         </div>
 
@@ -93,7 +145,10 @@ export function FirstPrinciples() {
                          focus:outline-none focus:border-dojo-accent/50 focus:ring-1 focus:ring-dojo-accent/30"
               placeholder="Name the principle..."
               value={principle}
-              onChange={(e) => setPrinciple(e.target.value)}
+              onChange={(e) => {
+                setPrinciple(e.target.value)
+                principleRef.current = e.target.value
+              }}
               autoFocus
             />
           </div>
@@ -106,75 +161,94 @@ export function FirstPrinciples() {
               className="w-full"
               placeholder="Explain what the PM should do differently and why..."
               value={application}
-              onChange={(e) => setApplication(e.target.value)}
+              onChange={(e) => {
+                setApplication(e.target.value)
+                applicationRef.current = e.target.value
+              }}
             />
           </div>
         </div>
 
         <button
-          onClick={submitAnswer}
+          onClick={() => void runGrading(scenario)}
           disabled={principle.trim().length < 3 || application.trim().length < 10}
           className="dojo-btn-primary w-full disabled:opacity-30 disabled:cursor-not-allowed"
         >
-          Reveal Answer
+          Submit for Grading
         </button>
       </div>
     )
   }
 
-  // Reveal
+  if (phase === 'grading') {
+    return (
+      <div className="space-y-6 text-center pt-12">
+        {gradeError ? (
+          <>
+            <h2 className="text-xl font-bold">Couldn’t grade that round</h2>
+            <p className="text-sm text-dojo-muted max-w-md mx-auto">{gradeError}</p>
+            <div className="flex gap-3 justify-center max-w-md mx-auto">
+              <button
+                onClick={() => {
+                  gradingLock.current = false
+                  void runGrading(scenario)
+                }}
+                className="dojo-btn-primary flex-1"
+              >
+                Retry
+              </button>
+              <button onClick={playAgain} className="dojo-btn flex-1">
+                New Round
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="text-4xl animate-pulse">🧠</div>
+            <h2 className="text-xl font-bold">Grading your thinking…</h2>
+            <p className="text-sm text-dojo-muted">
+              Scoring identification and application against the best answer.
+            </p>
+          </>
+        )}
+      </div>
+    )
+  }
+
+  if (!grade) return null
+
   return (
     <div className="space-y-6 animate-slide-up">
-      <h2 className="text-xl font-bold">{scenario.title} — Answer</h2>
+      <h2 className="text-xl font-bold">{scenario.title} — Results</h2>
 
-      {/* Side by side */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="dojo-card border-dojo-accent/30">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-dojo-accent mb-2">Your Answer</h3>
-          <p className="text-sm font-semibold mb-2">{principle}</p>
-          <p className="text-sm text-dojo-text/70">{application}</p>
-        </div>
-        <div className="dojo-card border-dojo-green/30">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-dojo-green mb-2">Best Answer</h3>
-          <p className="text-sm font-semibold mb-1">{scenario.bestAnswer.principle}</p>
-          <p className="text-xs text-dojo-muted mb-2">Source: {scenario.bestAnswer.source}</p>
-          <p className="text-sm text-dojo-text/70">{scenario.bestAnswer.explanation}</p>
-        </div>
-      </div>
+      <ScoreCard
+        scores={grade.dimensions.map((d) => ({
+          label: d.label,
+          value: d.value,
+          max: d.max,
+          color: 'dojo-blue',
+          feedback: d.feedback,
+        }))}
+        takeaway={grade.takeaway}
+        yourResponse={`${principle}\n\n${application}`}
+        modelAnswer={`${scenario.bestAnswer.principle}\n\n${scenario.bestAnswer.explanation}`}
+        principles={scenario.relatedPrinciples}
+      />
 
-      {/* Related principles */}
-      <div className="flex flex-wrap gap-2">
-        {scenario.relatedPrinciples.map((p) => (
-          <span key={p} className="text-xs px-2 py-1 rounded-full border border-dojo-border text-dojo-muted">{p}</span>
-        ))}
-      </div>
-
-      {/* Self-scoring */}
-      <div className="dojo-card space-y-4">
-        <h3 className="text-sm font-semibold uppercase tracking-wider text-dojo-muted">Score Yourself</h3>
-        {([
-          { key: 'identification' as const, label: 'Identification (0-5)', hint: 'Did you name the right principle?' },
-          { key: 'application' as const, label: 'Application (0-5)', hint: 'Was your application specific and actionable?' },
-        ]).map(({ key, label, hint }) => (
-          <div key={key}>
-            <div className="flex justify-between items-center">
-              <span className="text-sm">{label}</span>
-              <span className="text-xl font-bold text-dojo-accent">{selfScore[key]}</span>
-            </div>
-            <p className="text-xs text-dojo-muted mb-1">{hint}</p>
-            <input
-              type="range" min={0} max={5}
-              value={selfScore[key]}
-              onChange={(e) => setSelfScore((s) => ({ ...s, [key]: parseInt(e.target.value) }))}
-              className="w-full accent-dojo-accent"
-            />
-          </div>
-        ))}
+      <div className="dojo-card border-dojo-green/30">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-dojo-green mb-2">
+          Best Answer Source
+        </h3>
+        <p className="text-sm text-dojo-muted">{scenario.bestAnswer.source}</p>
       </div>
 
       <div className="flex gap-3">
-        <button onClick={saveAndNext} className="dojo-btn-primary flex-1">Save & New Round</button>
-        <Link to="/" className="dojo-btn flex-1 text-center">Back to Arena</Link>
+        <button onClick={playAgain} className="dojo-btn-primary flex-1">
+          New Round
+        </button>
+        <Link to="/" className="dojo-btn flex-1 text-center">
+          Back to Arena
+        </Link>
       </div>
     </div>
   )

@@ -1,4 +1,7 @@
-import { gradeWithGemini, type GradeScenarioInput } from './_lib/gradeWithGemini'
+import {
+  gradeWithGemini,
+  normalizeGradeRequest,
+} from './_lib/gradeWithGemini'
 
 export const config = { runtime: 'edge', regions: ['iad1'] }
 
@@ -32,26 +35,36 @@ export default async function handler(req: Request) {
     )
   }
 
-  let body: { scenario?: GradeScenarioInput; userAnswer?: string }
+  let body: Record<string, unknown>
   try {
     body = await req.json()
   } catch {
     return json({ error: 'Invalid JSON body' }, 400)
   }
 
-  const { scenario, userAnswer } = body
-  if (!scenario?.title || !scenario?.setup || !scenario?.task || !scenario?.gradingHints) {
-    return json({ error: 'Missing scenario fields' }, 400)
+  let gradeReq
+  try {
+    gradeReq = normalizeGradeRequest(body)
+  } catch (err) {
+    return json(
+      { error: err instanceof Error ? err.message : 'Invalid grade request' },
+      400
+    )
   }
-  if (typeof userAnswer !== 'string') {
-    return json({ error: 'Missing userAnswer' }, 400)
-  }
-  if (userAnswer.length > 8000) {
+
+  const answerLen =
+    gradeReq.mode === 'inbox-fire'
+      ? gradeReq.payload.userAnswer.length
+      : gradeReq.mode === 'first-principles'
+        ? gradeReq.payload.principle.length + gradeReq.payload.application.length
+        : gradeReq.payload.rewrite.length
+
+  if (answerLen > 8000) {
     return json({ error: 'Answer too long' }, 400)
   }
 
   try {
-    const result = await gradeWithGemini(apiKey, scenario, userAnswer)
+    const result = await gradeWithGemini(apiKey, gradeReq)
     return json(result)
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Grading failed'

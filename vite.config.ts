@@ -2,7 +2,7 @@ import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 import fs from 'fs'
-import { gradeWithGemini } from './api/_lib/gradeWithGemini'
+import { gradeWithGemini, normalizeGradeRequest } from './api/_lib/gradeWithGemini'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
@@ -61,14 +61,20 @@ export default defineConfig(({ mode }) => {
                 }
 
                 const body = JSON.parse(Buffer.concat(chunks).toString() || '{}')
-                const { scenario, userAnswer } = body
-                if (!scenario?.title || typeof userAnswer !== 'string') {
+                let gradeReq
+                try {
+                  gradeReq = normalizeGradeRequest(body)
+                } catch (err) {
                   res.statusCode = 400
-                  res.end(JSON.stringify({ error: 'Missing scenario or userAnswer' }))
+                  res.end(
+                    JSON.stringify({
+                      error: err instanceof Error ? err.message : 'Invalid grade request',
+                    })
+                  )
                   return
                 }
 
-                const result = await gradeWithGemini(apiKey, scenario, userAnswer)
+                const result = await gradeWithGemini(apiKey, gradeReq)
                 res.statusCode = 200
                 res.end(JSON.stringify(result))
               } catch (err) {
@@ -80,6 +86,15 @@ export default defineConfig(({ mode }) => {
                     JSON.stringify({
                       error:
                         'Gemini free-tier quota hit. Wait a few minutes (or until daily reset) and retry.',
+                    })
+                  )
+                  return
+                }
+                if (message.includes('503') || message.toLowerCase().includes('high demand')) {
+                  res.statusCode = 503
+                  res.end(
+                    JSON.stringify({
+                      error: 'Gemini is busy right now. Hit Retry in a few seconds.',
                     })
                   )
                   return
