@@ -62,7 +62,7 @@ export async function gradeWithGemini(
 ): Promise<GradeResult> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`
   const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 20000)
+  const timeout = setTimeout(() => controller.abort(), 22000)
 
   let res: Response
   try {
@@ -74,8 +74,8 @@ export async function gradeWithGemini(
         contents: [{ role: 'user', parts: [{ text: buildPrompt(scenario, userAnswer) }] }],
         generationConfig: {
           temperature: 0.2,
-          maxOutputTokens: 800,
-          thinkingConfig: { thinkingBudget: 512 },
+          maxOutputTokens: 700,
+          thinkingConfig: { thinkingBudget: 256 },
         },
       }),
     })

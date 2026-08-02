@@ -1,6 +1,6 @@
 import { gradeWithGemini, type GradeScenarioInput } from './_lib/gradeWithGemini'
 
-export const config = { runtime: 'edge' }
+export const config = { runtime: 'edge', regions: ['iad1'] }
 
 const corsHeaders: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
