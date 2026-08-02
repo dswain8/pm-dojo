@@ -171,7 +171,7 @@ export function Home() {
       </div>
 
       <p className="text-center text-sm text-dojo-muted font-mono">
-        Self-graded PM writing practice · ~20 scenarios · no login
+        Timed PM writing drills · AI-graded Inbox Fire · no login
       </p>
 
       {/* === MODE CARDS === */}

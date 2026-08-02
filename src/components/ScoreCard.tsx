@@ -10,6 +10,8 @@ interface ScoreCardProps {
   scores: Score[]
   modelAnswer?: string
   principles: string[]
+  takeaway?: string
+  yourResponse?: string
 }
 
 function scoreColor(value: number, max: number): string {
@@ -20,30 +22,36 @@ function scoreColor(value: number, max: number): string {
   return 'border-dojo-red text-dojo-red'
 }
 
-export function ScoreCard({ scores, modelAnswer, principles }: ScoreCardProps) {
+export function ScoreCard({
+  scores,
+  modelAnswer,
+  principles,
+  takeaway,
+  yourResponse,
+}: ScoreCardProps) {
   const total = scores.reduce((sum, s) => sum + s.value, 0)
   const maxTotal = scores.reduce((sum, s) => sum + s.max, 0)
 
   return (
     <div className="space-y-6 animate-slide-up">
-      {/* Overall */}
       <div className="text-center">
         <div className="text-4xl font-bold text-dojo-accent animate-score-reveal inline-block">
           {total}/{maxTotal}
         </div>
         <div className="text-dojo-muted text-sm mt-1">
-          {total / maxTotal >= 0.8
-            ? 'Senior PM energy. Nice.'
-            : total / maxTotal >= 0.6
-              ? 'Solid. A few things to tighten.'
-              : total / maxTotal >= 0.4
-                ? 'Getting there. See the notes below.'
-                : 'Rough round. Read the feedback — then try again.'}
+          {takeaway
+            ? takeaway
+            : total / maxTotal >= 0.8
+              ? 'Senior PM energy. Nice.'
+              : total / maxTotal >= 0.6
+                ? 'Solid. A few things to tighten.'
+                : total / maxTotal >= 0.4
+                  ? 'Getting there. See the notes below.'
+                  : 'Rough round. Read the feedback — then try again.'}
         </div>
       </div>
 
-      {/* Individual scores */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {scores.map((s) => (
           <div key={s.label} className="dojo-card text-center">
             <div
@@ -54,12 +62,24 @@ export function ScoreCard({ scores, modelAnswer, principles }: ScoreCardProps) {
             <div className="text-xs uppercase tracking-wider text-dojo-muted mt-2">
               {s.label}
             </div>
-            <div className="text-xs text-dojo-text/70 mt-2">{s.feedback}</div>
+            <div className="text-xs text-dojo-text/80 mt-2 text-left leading-relaxed">
+              {s.feedback}
+            </div>
           </div>
         ))}
       </div>
 
-      {/* Principles */}
+      {yourResponse !== undefined && (
+        <div className="dojo-card">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-dojo-muted mb-2">
+            Your Response
+          </h3>
+          <p className="text-sm whitespace-pre-wrap text-dojo-text/80">
+            {yourResponse.trim() || '(empty)'}
+          </p>
+        </div>
+      )}
+
       <div className="dojo-card">
         <h3 className="text-sm font-semibold text-dojo-accent uppercase tracking-wider mb-2">
           Principles Tested
@@ -76,7 +96,6 @@ export function ScoreCard({ scores, modelAnswer, principles }: ScoreCardProps) {
         </div>
       </div>
 
-      {/* Model answer */}
       {modelAnswer && (
         <div className="dojo-card">
           <h3 className="text-sm font-semibold text-dojo-green uppercase tracking-wider mb-2">

@@ -1,0 +1,73 @@
+import { gradeWithGemini, type GradeScenarioInput } from './_lib/gradeWithGemini'
+
+export const config = { runtime: 'edge' }
+
+const corsHeaders: Record<string, string> = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+}
+
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json', ...corsHeaders },
+  })
+}
+
+export default async function handler(req: Request) {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: corsHeaders })
+  }
+
+  if (req.method !== 'POST') {
+    return json({ error: 'Method not allowed' }, 405)
+  }
+
+  const apiKey = process.env.GEMINI_API_KEY
+  if (!apiKey) {
+    return json(
+      { error: 'Grading is not configured. Set GEMINI_API_KEY on the server.' },
+      503
+    )
+  }
+
+  let body: { scenario?: GradeScenarioInput; userAnswer?: string }
+  try {
+    body = await req.json()
+  } catch {
+    return json({ error: 'Invalid JSON body' }, 400)
+  }
+
+  const { scenario, userAnswer } = body
+  if (!scenario?.title || !scenario?.setup || !scenario?.task || !scenario?.gradingHints) {
+    return json({ error: 'Missing scenario fields' }, 400)
+  }
+  if (typeof userAnswer !== 'string') {
+    return json({ error: 'Missing userAnswer' }, 400)
+  }
+  if (userAnswer.length > 8000) {
+    return json({ error: 'Answer too long' }, 400)
+  }
+
+  try {
+    const result = await gradeWithGemini(apiKey, scenario, userAnswer)
+    return json(result)
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Grading failed'
+    console.error('grade error:', message)
+    if (message.includes('429') || message.toLowerCase().includes('quota')) {
+      return json(
+        {
+          error:
+            'Gemini free-tier quota hit. Wait a few minutes (or until daily reset) and retry.',
+        },
+        429
+      )
+    }
+    if (message.includes('aborted') || message.includes('AbortError')) {
+      return json({ error: 'Grading timed out. Try again.' }, 504)
+    }
+    return json({ error: 'Could not grade response. Try again.' }, 502)
+  }
+}
