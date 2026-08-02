@@ -69,6 +69,11 @@ function toResult(parsed: GradeResult): GradeResult {
   }
 }
 
+function collectText(parts: Array<{ text?: string }> | undefined): string {
+  if (!parts?.length) return ''
+  return parts.map((p) => p.text || '').join('').trim()
+}
+
 export async function gradeWithGemini(
   apiKey: string,
   scenario: GradeScenarioInput,
@@ -79,8 +84,8 @@ export async function gradeWithGemini(
     contents: [{ role: 'user', parts: [{ text: buildPrompt(scenario, userAnswer) }] }],
     generationConfig: {
       temperature: 0.2,
-      maxOutputTokens: 700,
-      thinkingConfig: { thinkingBudget: 256 },
+      maxOutputTokens: 2048,
+      thinkingConfig: { thinkingBudget: 512 },
     },
   })
 
@@ -111,10 +116,18 @@ export async function gradeWithGemini(
       }
 
       const data = (await res.json()) as {
-        candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>
+        candidates?: Array<{
+          finishReason?: string
+          content?: { parts?: Array<{ text?: string }> }
+        }>
       }
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text
-      if (!text) throw new Error('Empty Gemini response')
+      const candidate = data.candidates?.[0]
+      const text = collectText(candidate?.content?.parts)
+      if (!text) {
+        throw new Error(
+          `Empty Gemini response (${candidate?.finishReason || 'no finish reason'})`
+        )
+      }
       return toResult(extractJson(text))
     } finally {
       clearTimeout(timeout)
