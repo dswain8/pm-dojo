@@ -23,7 +23,7 @@ export interface GradeResult {
   takeaway: string
 }
 
-const MODEL = 'gemini-flash-latest'
+const MODEL = 'gemini-flash-lite-latest'
 
 function clamp(n: unknown): number {
   const v = typeof n === 'number' ? n : Number(n)
